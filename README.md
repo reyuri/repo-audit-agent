@@ -55,7 +55,7 @@
 ## 三、快速开始
 
 ```bash
-conda create -n tdas python=3.11 && conda activate tdas
+conda create -n raat python=3.11 && conda activate raat
 pip install -r requirements.txt
 cp .env.example .env   # 填 LLM API key / GITHUB_TOKEN
 
