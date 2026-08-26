@@ -1,6 +1,6 @@
 # TDAS Demo 录屏脚本（约 5 分钟）
 
-> 目标观众：AI Agent 工程师面试官。节奏：**先讲痛点 → 架构 → 真实审计 → 反思 → 可观测**。
+> 目标：5 分钟完整演示。节奏：**先讲痛点 → 架构 → 真实审计 → 反思 → 可观测**。
 > 录屏工具推荐 OBS（1080p，或系统自带 Win+G）。录前确保 `data/` 索引就绪。
 
 ---
@@ -21,10 +21,10 @@ streamlit run backend/app/ui/app.py
 
 ## 1. 开场（30s）—— 痛点
 
-> "面试官你好，这是我的个人项目 TDAS：一个多 Agent 技术文档深度审计系统。
-> 背景是——你让单个 LLM 问一个开源仓库'有哪些已知问题'，它只会给泛泛而谈的答案，
+> "大家好，我来演示 TDAS：一个多 Agent 技术文档深度审计系统。
+> 背景是——单个 LLM 问一个开源仓库'有哪些已知问题'，只会给泛泛而谈的答案，
 > 因为代码里真正有价值的答案藏在 issue 讨论、PR diff 和官方文档三处，单一检索抓不全。
-> 我把这件事做成了一个多 Agent 流水线。"
+> 所以我把它做成一个多 Agent 流水线。"
 
 **画面**：停在这个开场话术页面，或者切到 README 架构图。
 
@@ -65,7 +65,7 @@ streamlit run backend/app/ui/app.py
 > 这就是'官方推荐 vs 实际失效'的张力。"
 
 **画面**：展开 1-2 条 strong 证据的 finding，指来源链接（可点开 GitHub）。
-> "反思层我把各 worker 结论喂给 Pro 模型做矛盾检测。这轮没检出冲突——
+> "反思层我把各 worker 结论喂给强推理模型做矛盾检测。这轮没检出冲突——
 > 因为结论是互补的。但我用已知矛盾样本做过评估，3/3 通过：能分辨真矛盾（限制可靠 vs 失效）
 > 和看似矛盾（已弃用 vs 还在用）。"
 
@@ -97,21 +97,12 @@ streamlit run backend/app/ui/app.py
 
 ## 7. 收尾（20s）—— 边界 + 工程细节
 
-> "两个诚实的边界：code worker 的代码证据来自 PR diff 和讨论，没做 AST 符号级检索，这是未来工作；
+> "两个边界：code worker 的代码证据来自 PR diff 和讨论，没做 AST 符号级检索，这是未来工作；
 > Qdrant 用的是嵌入式本地模式，生产会换服务端。工程上的细节——确定性 uuid5 让索引幂等可续传、
 > 机器人评论过滤避免噪音污染检索、BM25 和向量在同一批 chunk 上对齐才能做 RRF 融合。"
 
-**画面**：README「诚实的边界」小节。
+**画面**：README「限制与后续工作」小节。
 
 ---
 
-## 问答弹药（面试官可能追问）
-
-| 追问 | 一句话答 |
-|---|---|
-| 为什么 RRF 不纯向量 | 长尾关键词（函数名、报错信息）向量召回差，BM25 互补；`1/(k+rank)` 融合，调 k 控平滑 |
-| 并行怎么实现的 | `ThreadPoolExecutor` 并行 worker，SQLite 加锁 + `check_same_thread=False` |
-| 冲突识别怎么裁决 | 确定性来源可信度分档（合并PR>文档>未合并PR>issue>评论）先定级别，LLM 只做语义矛盾判断 |
-| supervisor 和 worker 谁用 Pro | supervisor/planner/reflect 用 Pro，检索 worker 用 Flash——调度要聪明、检索要快，成本分层 |
-| 记忆是什么 | 长期：SQLite 跨会话审计记忆；短期：本轮 seen_sources 来源去重，防多 worker 重复引用 |
-| 卡过的坑 | onnxruntime 病态慢换 torch CPU；HF 下载走镜像；REST 1 万上限换 GraphQL；GBK 控制台编码 |
+> 附：技术答疑要点见本地 `INTERVIEW_STORY.md`（不进公开仓库）。

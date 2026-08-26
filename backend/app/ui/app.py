@@ -203,7 +203,7 @@ def main():
             n_texts = 0
         st.markdown(f"**数据底座**：\n- Qdrant 向量点 `{n_points:,}`\n- 全文文本 `{n_texts:,}`")
         st.divider()
-        st.caption("模型分工：Supervisor/Planner/Reflect → Pro · 检索 Worker → Flash")
+        st.caption("模型分工：编排/反思 → 强推理模型 · 检索 Worker → 低成本快速模型")
 
     question = st.text_area("要审计的问题", value=DEFAULT_Q, height=90)
     run = st.button("🚀 运行审计", type="primary", use_container_width=True)

@@ -61,7 +61,7 @@ def run_react(query: str, worker_type: str, tools: list[dict], llm, db: DB, repo
         t0 = time.time()
         try:
             content, calls = llm.chat_with_tools(messages, tool_schemas,
-                                                 model=settings.deepseek_model_flash)
+                                                 model=settings.llm_model_fast)
         except Exception as e:
             db.trace(agent=worker_type, node="reason", latency_ms=int((time.time() - t0) * 1000),
                      detail=f"LLM 调用失败: {str(e)[:300]}")
@@ -108,7 +108,7 @@ def run_react(query: str, worker_type: str, tools: list[dict], llm, db: DB, repo
                        "标明证据来源；若证据不足请明确说明「证据不足」。不要再调用工具。",
         })
         try:
-            final_answer = llm.chat(messages, model=settings.deepseek_model_flash) or "(无结论)"
+            final_answer = llm.chat(messages, model=settings.llm_model_fast) or "(无结论)"
         except Exception as e:
             final_answer = f"[强制收敛失败] {str(e)[:200]}"
 

@@ -1,4 +1,4 @@
-"""Reflection：冲突识别 + 来源溯源 + 证据分级（D5 核心 agent 逻辑，跑 V4-Pro）。
+"""Reflection：冲突识别 + 来源溯源 + 证据分级（D5 核心 agent 逻辑，跑强推理模型）。
 
 审计类 agent 的关键一环：不只看「有没有证据」，还要看「证据是否互相矛盾、哪个更可信」。
 分两层实现（可解释性是设计目标）：
@@ -107,7 +107,7 @@ def detect_conflicts(question: str, outputs: list[dict], llm, db: DB, repo: str)
     ]
     t0 = time.time()
     try:
-        text = llm.chat(prompt, model=settings.deepseek_model_pro)
+        text = llm.chat(prompt, model=settings.llm_model_reasoning)
     except Exception as e:
         db.trace(agent="reflect", node="conflict", latency_ms=int((time.time() - t0) * 1000),
                  detail=f"LLM 调用失败: {str(e)[:300]}")

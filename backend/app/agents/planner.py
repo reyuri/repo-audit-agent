@@ -39,7 +39,7 @@ def planner_node(state, llm, db, repo: str):
     ]
     t0 = time.time()
     try:
-        text = llm.chat(prompt, model=settings.deepseek_model_pro)
+        text = llm.chat(prompt, model=settings.llm_model_reasoning)
     except Exception as e:
         db.trace(agent="planner", node="plan", latency_ms=int((time.time() - t0) * 1000),
                  detail=f"LLM 调用失败: {str(e)[:300]}")

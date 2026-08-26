@@ -1,4 +1,4 @@
-"""Supervisor：动态调度器（D4 核心 agent 逻辑，跑 V4-Pro）。
+"""Supervisor：动态调度器（D4 核心 agent 逻辑，跑强推理模型）。
 
 D3 是静态线性流 planner→doc_worker→aggregator；D4 引入 supervisor 做「动态调度」：
 
@@ -137,7 +137,7 @@ def _decide_followups(question: str, outputs: list[dict], seen: list[dict],
     ]
     t0 = time.time()
     try:
-        text = llm.chat(prompt, model=settings.deepseek_model_pro)
+        text = llm.chat(prompt, model=settings.llm_model_reasoning)
     except Exception as e:
         db.trace(agent="supervisor", node="decide", latency_ms=int((time.time() - t0) * 1000),
                  detail=f"LLM 调用失败: {str(e)[:300]}")

@@ -14,11 +14,12 @@ class Settings(BaseSettings):
         env_file=str(ROOT / ".env"), env_file_encoding="utf-8", extra="ignore"
     )
 
-    # ---- LLM（DeepSeek / OpenAI 兼容，可切换 provider）----
-    deepseek_api_key: str = ""
-    deepseek_base_url: str = "https://api.deepseek.com"
-    deepseek_model_flash: str = "deepseek-v4-flash"  # 检索 Worker / 一般开发
-    deepseek_model_pro: str = "deepseek-v4-pro"      # Supervisor/Planner/Reflect
+    # ---- LLM（OpenAI 兼容，可切换 provider）----
+    # 具体 key/base_url/模型名都在私有 .env 里配置；代码里只按角色取模型。
+    llm_api_key: str = ""
+    llm_base_url: str = ""
+    llm_model_fast: str = ""       # 检索 Worker / 一般开发（低成本快速模型）
+    llm_model_reasoning: str = ""  # 编排/反思（强推理模型）
 
     # ---- GitHub ----
     github_token: str = ""
