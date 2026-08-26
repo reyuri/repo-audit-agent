@@ -30,7 +30,7 @@ from backend.app.llm import LLM
 
 st.set_page_config(page_title="RAAT · 多 Agent 深度审计", page_icon="🔍", layout="wide")
 
-DEFAULT_Q = "LangChain 的 memory 模块在生产环境里有哪些已知 bug、性能陷阱和已修复的问题？"
+DEFAULT_Q = "LangChain 的 memory 模块在生产环境有哪些已知问题？"
 
 GRADE_COLORS = {
     "strong": "#16a34a",

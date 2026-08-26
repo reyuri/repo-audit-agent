@@ -18,7 +18,7 @@ from ..app.db import DB
 from ..app.llm import LLM
 from ..app.rag.retriever import Retriever
 
-DEFAULT_Q = "LangChain 的 memory 模块在生产环境里有哪些已知问题？"
+DEFAULT_Q = "LangChain 的 memory 模块在生产环境有哪些已知问题？"
 
 
 def main():
