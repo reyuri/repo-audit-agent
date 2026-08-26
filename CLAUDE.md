@@ -14,7 +14,8 @@ python -m backend.scripts.ingest_docs            # 拉官方文档
 python -m backend.scripts.build_index            # 分块入 Qdrant（uuid5 幂等，可续传）
 python -m backend.scripts.build_bm25             # 构建 BM25 pickle（与向量同源对齐）
 python -m backend.scripts.search_demo "query"    # 检索验证（BM25+ANN+RRF）
-python -m backend.scripts.audit "问题"           # 完整审计（planner→supervisor→reflect→aggregator）
+python -m backend.scripts.audit "问题"           # 完整审计（planner→supervisor→reflect→aggregator，深度模式 ~5min）
+python -m backend.scripts.audit --fast "问题"    # 快速模式：少轮少步 ~3min
 python -m backend.scripts.eval_reflect           # 反思层评估集（已知冲突 ground truth）
 streamlit run backend/app/ui/app.py              # Streamlit UI（实时节点进度）
 ```

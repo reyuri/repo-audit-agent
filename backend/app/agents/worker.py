@@ -13,8 +13,7 @@ import time
 
 from ..config import settings
 from ..db import DB
-
-MAX_TOOL_STEPS = 6
+from .state import MAX_STEPS_BY_MODE, MODE_DEEP
 
 WORKER_PROMPT = """你是 {worker_type} 研究员，负责审计开源项目 {repo}。
 
@@ -42,13 +41,14 @@ def _seen_hint(seen_sources: list[dict]) -> str:
 
 
 def run_react(query: str, worker_type: str, tools: list[dict], llm, db: DB, repo: str,
-              seen_sources: list[dict] | None = None) -> dict:
-    """跑一个 ReAct 循环。返回 {worker, query, answer, sources, steps}。"""
+              seen_sources: list[dict] | None = None, max_steps: int | None = None) -> dict:
+    """跑一个 ReAct 循环。max_steps 按审计模式（fast/deep）传入，默认 deep。"""
+    max_steps = max_steps or MAX_STEPS_BY_MODE[MODE_DEEP]
     tool_map = {t["name"]: t["fn"] for t in tools}
     tool_schemas = [t["schema"] for t in tools]
     messages = [
         {"role": "system", "content": WORKER_PROMPT.format(
-            worker_type=worker_type, repo=repo, query=query, max_steps=MAX_TOOL_STEPS,
+            worker_type=worker_type, repo=repo, query=query, max_steps=max_steps,
             seen_hint=_seen_hint(seen_sources or []))},
         {"role": "user", "content": query},
     ]
@@ -56,7 +56,7 @@ def run_react(query: str, worker_type: str, tools: list[dict], llm, db: DB, repo
     final_answer: str | None = None
     used_steps = 0
 
-    for step in range(1, MAX_TOOL_STEPS + 1):
+    for step in range(1, max_steps + 1):
         used_steps = step
         t0 = time.time()
         try:

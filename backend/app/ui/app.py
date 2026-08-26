@@ -156,29 +156,33 @@ def render_traces(db: DB, trace_from: int):
     st.dataframe(df, use_container_width=True, hide_index=True)
 
 
-def run_audit(question: str, llm, db, retriever, repo: str) -> dict:
+def run_audit(question: str, llm, db, retriever, repo: str, mode: str = "deep") -> dict:
+    import time as _time
     graph = build_graph(llm, retriever, db, repo)
-    status = st.status("多 Agent 审计进行中…", expanded=True)
+    t0 = _time.time()
+    status = st.status(f"多 Agent 审计进行中…（{mode} 模式，0s）", expanded=True)
     report = None
     with status:
-        for chunk in graph.stream({"question": question, "repo": repo}, stream_mode="updates"):
+        for chunk in graph.stream({"question": question, "repo": repo, "mode": mode},
+                                  stream_mode="updates"):
             for node, upd in chunk.items():
+                el = int(_time.time() - t0)
                 if node == "planner":
                     plan = upd.get("plan") or []
-                    status.update(label=f"✅ Planner：拆解出 {len(plan)} 个子任务")
+                    status.update(label=f"✅ Planner：拆解出 {len(plan)} 个子任务（{el}s）")
                     st.markdown("**Planner** 将问题分解为子任务：")
                     for t in plan:
                         st.markdown(f"  - `{t.get('type')}` {t.get('query')}")
                 elif node == "supervisor":
                     n = len(upd.get("worker_outputs") or [])
-                    status.update(label=f"🔄 Supervisor：已并行产出 {n} 个 worker 结论（含动态追问）")
+                    status.update(label=f"🔄 Supervisor：已并行产出 {n} 个 worker 结论（含动态追问）（{el}s）")
                 elif node == "reflect":
                     nc = len((upd.get("reflection") or {}).get("conflicts") or [])
-                    status.update(label=f"🧠 Reflect：证据分级完成，检出 {nc} 个冲突")
+                    status.update(label=f"🧠 Reflect：证据分级完成，检出 {nc} 个冲突（{el}s）")
                 elif node == "aggregator":
-                    status.update(label="✅ Aggregator：审计报告生成")
+                    status.update(label=f"✅ Aggregator：审计报告生成（{el}s）")
                     report = upd.get("report")
-        status.update(label="✅ 审计完成", state="complete")
+        status.update(label=f"✅ 审计完成（{int(_time.time() - t0)}s）", state="complete")
     return report
 
 
@@ -206,13 +210,16 @@ def main():
         st.caption("模型分工：编排/反思 → 强推理模型 · 检索 Worker → 低成本快速模型")
 
     question = st.text_area("要审计的问题", value=DEFAULT_Q, height=90)
-    run = st.button("🚀 运行审计", type="primary", use_container_width=True)
+    c1, c2 = st.columns([3, 1])
+    run = c1.button("🚀 运行审计", type="primary", use_container_width=True)
+    fast_mode = c2.checkbox("⚡ 快速模式", help="少轮少步（~2-3min），默认深度模式（~5min）")
 
     if run:
         llm = _get_llm()
         trace_from = db.conn.execute("SELECT COALESCE(MAX(id),0) FROM agent_traces").fetchone()[0]
-        with st.spinner("加载检索与模型…"):
-            report = run_audit(question, llm, db, retriever, repo)
+        # 不包 spinner：run_audit 内部 st.status 已实时展示各节点进度与耗时
+        report = run_audit(question, llm, db, retriever, repo,
+                           mode="fast" if fast_mode else "deep")
         if report is None:
             st.error("审计失败：未生成报告（看 agent_traces 排查）")
         else:

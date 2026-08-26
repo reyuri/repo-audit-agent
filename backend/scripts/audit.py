@@ -24,6 +24,7 @@ DEFAULT_Q = "LangChain 的 memory 模块在生产环境里有哪些已知问题�
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("question", nargs="?", default=DEFAULT_Q)
+    ap.add_argument("--fast", action="store_true", help="快速模式：少轮少步（~2-3min），默认深度模式（~5min）")
     ap.add_argument("--json", action="store_true", help="输出结构化 JSON 报告")
     args = ap.parse_args()
 
@@ -32,7 +33,10 @@ def main():
     retriever = Retriever(repo=settings.target_repo)
     graph = build_graph(llm, retriever, db, settings.target_repo)
 
-    result = graph.invoke({"question": args.question, "repo": settings.target_repo})
+    result = graph.invoke({
+        "question": args.question, "repo": settings.target_repo,
+        "mode": "fast" if args.fast else "deep",
+    })
     report = result["report"]
 
     if args.json:

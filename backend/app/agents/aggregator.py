@@ -58,6 +58,7 @@ def aggregator_node(state):
         "findings": findings,
         "reflection": reflection,
         "metadata": {
+            "mode": state.get("mode", "deep"),
             "worker_outputs": len(outputs),
             "total_steps": sum(o.get("steps", 0) for o in outputs),
             "covered_types": sorted({o.get("worker") for o in outputs if o.get("worker")}),

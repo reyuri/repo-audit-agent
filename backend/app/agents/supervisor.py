@@ -20,11 +20,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from ..config import settings
 from ..db import DB
+from .state import MAX_FOLLOWUPS_BY_MODE, MAX_ROUNDS_BY_MODE, MAX_STEPS_BY_MODE, MODE_DEEP
 from .tools import WORKER_TOOLS, build_tools_for
 from .worker import run_react
-
-MAX_ROUNDS = 3       # 调度轮数上界（第 1 轮静态 + 最多 2 轮动态追问）
-MAX_FOLLOWUPS = 2    # 每轮动态追问最多追加的子任务数
 
 SUPERVISOR_PROMPT = """你是审计 supervisor，负责判断当前证据是否充分，必要时追加查证。
 
@@ -67,7 +65,7 @@ def _update_seen(seen: list[dict], output: dict) -> None:
 
 
 def _run_parallel(tasks: list[dict], retriever, llm, db: DB, repo: str,
-                  seen: list[dict]) -> list[dict]:
+                  seen: list[dict], max_steps: int) -> list[dict]:
     """并行跑一组子任务（每个 task 按其 type 走对应 worker + 工具子集）。"""
     if not tasks:
         return []
@@ -75,7 +73,7 @@ def _run_parallel(tasks: list[dict], retriever, llm, db: DB, repo: str,
 
     def work(t: dict) -> dict:
         wt = t.get("type") if t.get("type") in WORKER_TOOLS else "doc"
-        return run_react(t.get("query", ""), wt, tools_by_type[wt], llm, db, repo, seen)
+        return run_react(t.get("query", ""), wt, tools_by_type[wt], llm, db, repo, seen, max_steps)
 
     results: list[dict] = []
     with ThreadPoolExecutor(max_workers=min(len(tasks), 3)) as ex:
@@ -90,15 +88,15 @@ def _run_parallel(tasks: list[dict], retriever, llm, db: DB, repo: str,
     return results
 
 
-def _normalize_followups(fu) -> list[dict]:
+def _normalize_followups(fu, max_followups: int) -> list[dict]:
     out = []
     for f in (fu or []):
         if isinstance(f, dict) and f.get("type") in WORKER_TOOLS and f.get("query"):
             out.append({"id": None, "type": f["type"], "query": f["query"].strip()[:200]})
-    return out[:MAX_FOLLOWUPS]
+    return out[:max_followups]
 
 
-def _parse_followups(text: str) -> list[dict]:
+def _parse_followups(text: str, max_followups: int) -> list[dict]:
     """解析 supervisor 输出。支持 {"followups": [...]} 与纯数组两种形态，容错其它噪声。"""
     text = text.strip()
     # 优先：{"followups": [...]}
@@ -107,7 +105,7 @@ def _parse_followups(text: str) -> list[dict]:
         try:
             obj = json.loads(text[start:end + 1])
             if isinstance(obj, dict) and isinstance(obj.get("followups"), list):
-                return _normalize_followups(obj["followups"])
+                return _normalize_followups(obj["followups"], max_followups)
         except Exception:
             pass
     # 兜底：纯数组
@@ -116,23 +114,24 @@ def _parse_followups(text: str) -> list[dict]:
         try:
             arr = json.loads(text[start2:end2 + 1])
             if isinstance(arr, list):
-                return _normalize_followups(arr)
+                return _normalize_followups(arr, max_followups)
         except Exception:
             pass
     return []
 
 
 def _decide_followups(question: str, outputs: list[dict], seen: list[dict],
-                      llm, db: DB, repo: str, rnd: int) -> list[dict]:
+                      llm, db: DB, repo: str, rnd: int, max_followups: int) -> list[dict]:
     """supervisor 决策：读当前产出，决定是否追加追问（Pro 模型）。"""
+    # 上下文压缩：Pro 调用耗时与输入长度强相关，只喂最近几条 + 截断答案
     completed = "\n".join(
-        f"- [{o.get('worker')}] {o.get('query')}\n  {(o.get('answer') or '')[:300]}"
-        for o in outputs
+        f"- [{o.get('worker')}] {o.get('query')}\n  {(o.get('answer') or '')[:200]}"
+        for o in outputs[-8:]
     ) or "(无)"
     seen_str = ", ".join(sorted({f"#{s['number']}" for s in seen if s.get("number")})) or "(无)"
     prompt = [
         {"role": "system", "content": SUPERVISOR_PROMPT.format(
-            question=question, completed=completed, seen=seen_str, max_followups=MAX_FOLLOWUPS)},
+            question=question, completed=completed, seen=seen_str, max_followups=max_followups)},
         {"role": "user", "content": question},
     ]
     t0 = time.time()
@@ -144,29 +143,39 @@ def _decide_followups(question: str, outputs: list[dict], seen: list[dict],
         return []
     db.trace(agent="supervisor", node="decide", latency_ms=int((time.time() - t0) * 1000),
              detail=f"round={rnd} {text[:800]}")
-    return _parse_followups(text)
+    return _parse_followups(text, max_followups)
 
 
 def supervisor_node(state: dict, llm, retriever, db: DB, repo: str) -> dict:
     question = state["question"]
     plan = state.get("plan", [])
+    mode = state.get("mode", MODE_DEEP)
+    max_steps = MAX_STEPS_BY_MODE.get(mode, MAX_STEPS_BY_MODE[MODE_DEEP])
+    max_rounds = MAX_ROUNDS_BY_MODE.get(mode, MAX_ROUNDS_BY_MODE[MODE_DEEP])
+    max_followups = MAX_FOLLOWUPS_BY_MODE.get(mode, MAX_FOLLOWUPS_BY_MODE[MODE_DEEP])
     outputs = list(state.get("worker_outputs", []))
     seen = list(state.get("seen_sources", []))
+
+    # 预热：BM25 + number 索引必须在并行 worker 前单线程加载（懒加载竞态会拖慢检索 ~14-19s/次）
+    try:
+        retriever.warmup()
+    except Exception:
+        pass  # 预热失败则 worker 内各自懒加载（慢但可用）
 
     # 第 1 轮：并行派发 planner 静态子任务（三类 worker 各干各的）
     tasks = [t for t in plan if t.get("type") in WORKER_TOOLS]
     if tasks:
-        for r in _run_parallel(tasks, retriever, llm, db, repo, seen):
+        for r in _run_parallel(tasks, retriever, llm, db, repo, seen, max_steps):
             outputs.append(r)
             _update_seen(seen, r)
 
-    # 第 2..N 轮：动态追加追问（supervisor 判断证据充分性）
-    for rnd in range(2, MAX_ROUNDS + 1):
-        followups = _decide_followups(question, outputs, seen, llm, db, repo, rnd)
+    # 第 2..N 轮：动态追加追问（supervisor 判断证据充分性，轮数按模式）
+    for rnd in range(2, max_rounds + 1):
+        followups = _decide_followups(question, outputs, seen, llm, db, repo, rnd, max_followups)
         if not followups:
             break
         db.trace(agent="supervisor", node="dispatch", detail=f"round={rnd} 追加 {len(followups)} 个子任务")
-        for r in _run_parallel(followups, retriever, llm, db, repo, seen):
+        for r in _run_parallel(followups, retriever, llm, db, repo, seen, max_steps):
             outputs.append(r)
             _update_seen(seen, r)
 

@@ -81,7 +81,7 @@ def _format_outputs(outputs: list[dict]) -> str:
         }))
         lines.append(
             f"[worker {i} / {o.get('worker')}] {o.get('query')}\n"
-            f"  断言: {(o.get('answer') or '')[:400]}\n"
+            f"  断言: {(o.get('answer') or '')[:200]}\n"
             f"  来源: {srcs or '(无)'}"
         )
     return "\n\n".join(lines)

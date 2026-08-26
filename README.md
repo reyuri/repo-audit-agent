@@ -1,10 +1,6 @@
-# TDAS — 多 Agent 技术文档深度审计系统
-
-> 通过学习端到端搭建的多 Agent 系统：对大型开源仓库做「官方文档 + issue 讨论 + PR diff」
-> 三源融合的深度技术审计。从数据采集、混合检索、多 Agent 编排、反思层到可观测与协议外接，
-> 覆盖 AI Agent 技术栈的完整链路，全部自研实现。
-
-数据底座：LangChain 全量历史 issue/PR/评论 + 官方文档，**14.3 万向量点**。
+# RAAT — 面向开源仓库的多Agent深度审计工具
+> 通过多Agent编排，融合官方文档、Issue讨论、PR diff三源证据，对开源项目做技术问题深度审计。
+> 数据底座：LangChain全量历史 issue/PR/评论 + 官方文档，14.3 万向量点。
 
 ---
 
@@ -80,7 +76,7 @@ python -m backend.app.mcp_server --transport sse --port 8010   # 常驻服务
 python -m backend.app.mcp_server                                # 或 stdio
 ```
 
-**MCP 客户端接入**（以 SSE 常驻服务为例，实测通过）：
+**可选：MCP 客户端接入**（以 SSE 常驻服务为例，实测通过）：
 ```bash
 # 启动常驻服务（预热模型）
 python -m backend.app.mcp_server --transport sse --port 8010
@@ -124,6 +120,7 @@ backend/
 
 ## 六、限制与后续工作
 
-- **code worker 的证据来源**：来自 PR diff 与讨论文本，未做 AST/符号级代码检索（后续可接入代码索引）。
+- **code worker 的证据来源**：来自 PR diff与discussion，未做 AST/符号级代码检索（后续可接入代码索引）。
 - **Qdrant 嵌入式（QdrantLocal）**：本地模式便于复现，非生产级；规模化需换 Qdrant 服务端。
 - **数据规模**：14.3 万点（LangChain 全量历史 + 官方文档），足以评测与复现。
+- **单仓验证**：当前验证集基于LangChain仓库，后续计划扩充多仓库批量自动化评测。
