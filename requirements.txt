@@ -1,0 +1,21 @@
+# TDAS 依赖（Python 3.11）
+# LLM / 编排
+langgraph>=0.2
+langsmith>=0.1        # 可观测（LangGraph 自动图级追踪 + LLM span）
+openai>=1.30
+# MCP（检索层暴露给外部 agent）
+mcp>=1.0
+fastmcp>=2.0
+# 检索 / 向量
+qdrant-client>=1.9
+fastembed>=0.3
+rank_bm25>=0.2
+# GitHub 数据
+requests>=2.31
+PyGithub>=2.0
+# 配置 / 工具
+pydantic>=2.6
+pydantic-settings>=2.2
+python-dotenv>=1.0
+# UI（D6 才需要，可延后）
+streamlit>=1.33
