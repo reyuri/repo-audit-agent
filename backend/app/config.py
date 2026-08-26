@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     # ---- 存储 ----
     qdrant_path: str = str(ROOT / "data" / "qdrant")
-    db_path: str = str(ROOT / "data" / "tdas.db")
+    db_path: str = str(ROOT / "data" / "raat.db")
     raw_data_dir: str = str(ROOT / "data" / "raw")
     cache_dir: str = str(ROOT / "data" / "cache")
 
@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     # 有 key 才激活追踪（LangGraph 自动图级 + LLM 方法 @traceable span 级）；
     # 无 key 时静默降级、不影响运行。
     langsmith_api_key: str = ""
-    langchain_project: str = "tdas"
+    langchain_project: str = "raat"
 
 
 settings = Settings()

@@ -76,7 +76,7 @@ def fetch_all_docs(owner: str, repo: str, token: str | None = None,
     print(f"共 {len(paths)} 个文档文件（branch={branch}）", flush=True)
 
     session = requests.Session()
-    session.headers.update({"User-Agent": "tdas-doc-ingest"})
+    session.headers.update({"User-Agent": "raat-doc-ingest"})
     records: list[dict] = []
     with ThreadPoolExecutor(max_workers=concurrency) as ex:
         futs = {ex.submit(fetch_raw, owner, repo, branch, p, session): p for p in paths}

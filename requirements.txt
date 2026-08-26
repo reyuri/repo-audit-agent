@@ -1,4 +1,4 @@
-# TDAS 依赖（Python 3.11）
+# RAAT 依赖（Python 3.11）
 # LLM / 编排
 langgraph>=0.2
 langsmith>=0.1        # 可观测（LangGraph 自动图级追踪 + LLM span）

@@ -1,4 +1,4 @@
-"""TDAS — 技术文档深度审计系统 · Streamlit UI。
+"""RAAT — 面向开源仓库的多 Agent 深度审计工具 · Streamlit UI。
 
 启动（项目根目录，conda activate tdas）：
     streamlit run backend/app/ui/app.py
@@ -28,7 +28,7 @@ from backend.app.config import settings
 from backend.app.db import DB
 from backend.app.llm import LLM
 
-st.set_page_config(page_title="TDAS · 技术文档深度审计", page_icon="🔍", layout="wide")
+st.set_page_config(page_title="RAAT · 多 Agent 深度审计", page_icon="🔍", layout="wide")
 
 DEFAULT_Q = "LangChain 的 memory 模块在生产环境里有哪些已知 bug、性能陷阱和已修复的问题？"
 
@@ -187,7 +187,7 @@ def run_audit(question: str, llm, db, retriever, repo: str, mode: str = "deep") 
 
 
 def main():
-    st.title("🔍 TDAS — 多 Agent 技术文档深度审计系统")
+    st.title("🔍 RAAT — 面向开源仓库的多 Agent 深度审计工具")
     st.caption("LangGraph supervisor 编排 · Qdrant+BM25 混合检索(RRF) · 反思层冲突识别")
 
     with st.sidebar:

@@ -1,4 +1,4 @@
-"""TDAS 检索层 MCP server（方向 B：把 14.3 万点 LangChain 索引暴露给任何 MCP 客户端）。
+"""RAAT 检索层 MCP server（方向 B：把 14.3 万点 LangChain 索引暴露给任何 MCP 客户端）。
 
 用法（项目根目录）：
     python -m backend.app.mcp_server           # stdio transport，等 MCP client 接入
@@ -41,7 +41,7 @@ from fastmcp import FastMCP
 
 from backend.app.config import settings
 
-mcp = FastMCP("tdas-retrieval")
+mcp = FastMCP("raat-retrieval")
 
 _retriever = None
 
@@ -118,7 +118,7 @@ def get_issue_detail(number: int) -> str:
 
 if __name__ == "__main__":
     import argparse
-    ap = argparse.ArgumentParser(description="TDAS 检索层 MCP server")
+    ap = argparse.ArgumentParser(description="RAAT 检索层 MCP server")
     ap.add_argument("--transport", choices=["stdio", "sse", "http"], default="stdio",
                     help="stdio=客户端拉起（启动慢~1min）；sse/http=常驻服务（Claude Code 等客户端推荐）")
     ap.add_argument("--host", default="127.0.0.1")

@@ -1,4 +1,4 @@
-# TDAS Demo 录屏脚本（约 5 分钟）
+# RAAT Demo 录屏脚本（约 5 分钟）
 
 > 目标：5 分钟完整演示。节奏：**先讲痛点 → 架构 → 真实审计 → 反思 → 可观测**。
 > 录屏工具推荐 OBS（1080p，或系统自带 Win+G）。录前确保 `data/` 索引就绪。
@@ -21,7 +21,7 @@ streamlit run backend/app/ui/app.py
 
 ## 1. 开场（30s）—— 痛点
 
-> "大家好，我来演示 TDAS：一个多 Agent 技术文档深度审计系统。
+> "大家好，我来演示 RAAT：一个面向开源仓库的多 Agent 深度审计工具。
 > 背景是——单个 LLM 问一个开源仓库'有哪些已知问题'，只会给泛泛而谈的答案，
 > 因为代码里真正有价值的答案藏在 issue 讨论、PR diff 和官方文档三处，单一检索抓不全。
 > 所以我把它做成一个多 Agent 流水线。"
@@ -80,7 +80,7 @@ streamlit run backend/app/ui/app.py
 > reflect 反思都落 SQLite，UI 直接可查，能复盘'慢在哪、谁调了什么'。两个消费方不同：
 > LangSmith 服务开发者调 bug，agent_traces 服务产品使用者。多 Agent 不是黑盒。"
 
-**画面**：先切到 LangSmith 网页（smith.langchain.com，project=tdas，展开整张图 DAG），
+**画面**：先切到 LangSmith 网页（smith.langchain.com，project=raat，展开整张图 DAG），
 指 supervisor/reflect 节点和 LLM span；再切回 Streamlit 的 Agent 轨迹表（agent/node/tool/平均耗时）。
 
 ## 6.5 MCP 能力（40s）—— 加分项
@@ -93,7 +93,7 @@ streamlit run backend/app/ui/app.py
 **画面**：终端启动 `python -m backend.app.mcp_server --transport sse --port 8010`（预热 ~30-60s），
 再用 Claude Code（`claude mcp list` 显示 ✔ Connected）跑一个 prompt 让它调 search_issues，
 展示它检索出真实 issue #17888。强调「自己写 server 并接入 Claude Code」而非「只调用别人工具」。
-> 注：若录屏时间紧，可先在 `claude -p --allowedTools "mcp__tdas-retrieval__*"` 下跑好检索，录屏时展示结果。
+> 注：若录屏时间紧，可先在 `claude -p --allowedTools "mcp__raat-retrieval__*"` 下跑好检索，录屏时展示结果。
 
 ## 7. 收尾（20s）—— 边界 + 工程细节
 

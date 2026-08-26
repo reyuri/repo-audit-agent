@@ -7,7 +7,7 @@
 ## 一、要解决的问题
 
 单 LLM 问一个仓库的「已知问题」只会给泛泛而谈的答案——真正有价值的信息散落在三处：
-官方文档、issue 讨论、PR diff，单一检索抓不全。TDAS 把这件事做成一个多 Agent 流水线：
+官方文档、issue 讨论、PR diff，单一检索抓不全。RAAT 把这件事做成一个多 Agent 流水线：
 
 ```
 用户问题
@@ -81,7 +81,7 @@ python -m backend.app.mcp_server                                # 或 stdio
 # 启动常驻服务（预热模型）
 python -m backend.app.mcp_server --transport sse --port 8010
 # 注册到 MCP 客户端（如 Claude Code / Cursor）
-claude mcp add --transport sse tdas-retrieval http://127.0.0.1:8010/sse
+claude mcp add --transport sse raat-retrieval http://127.0.0.1:8010/sse
 ```
 之后即可直接调用 `search_docs / search_issues / search_prs / get_issue_detail` 检索 LangChain 历史数据。
 

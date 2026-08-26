@@ -1,4 +1,4 @@
-# TDAS — Multi-Agent 技术文档深度审计系统
+# RAAT — 面向开源仓库的多 Agent 深度审计工具
 
 AI Agent 个人项目。完整规划与决策记录见本地文档 `TECH_DOC_AUDIT_AGENT_BRIEF.md`
 （**决策记录在 0.5 节**，新窗口照此执行；该文档仅本地保留，不进公开仓库）。
