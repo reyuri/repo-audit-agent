@@ -55,14 +55,17 @@ def _meta(rec: dict, source_type: str, kind: str, part: int = 0, **extra) -> dic
 def chunk_doc(rec: dict) -> list[dict]:
     """issue/PR 记录 → 分块文档列表。"""
     source_type = "issue" if rec.get("type") == "issue" else "pr"
+    #拼接头部标记 `[ISSUE] / [PR] + 标题`，**每一个 chunk 都带上标题，防止切分后上下文丢失**；
     head = f"[{source_type.upper()}] {rec.get('title', '')}".strip()
     body = (rec.get("body") or "").strip()
     if not body:
         return [{"text": head or "(no body)", "meta": _meta(rec, source_type, "body")}]
+     #调用`_split_text()`按段落切
     return [
         {"text": f"{head}\n\n{seg}", "meta": _meta(rec, source_type, "body", part=i)}
         for i, seg in enumerate(_split_text(body))
     ]
+   
 
 
 def chunk_comment(rec: dict) -> dict:
@@ -192,6 +195,7 @@ class Indexer:
         if not docs:
             return 0
         texts = [d["text"] for d in docs]
+        #批量取出所有 chunk 文本，**批量 embedding**（比循环单条快很多）；
         vectors = self.embedder.embed(texts)
         points = []
         text_map: dict[str, str] = {}
@@ -202,5 +206,5 @@ class Indexer:
             points.append(PointStruct(id=pid, vector=vec, payload=payload))
             text_map[pid] = text
         self.client.upsert(collection_name=self.collection, points=points, wait=wait)
-        self.db.put_doc_texts(text_map)
+        self.db.put_doc_texts(text_map)#批量写入 SQLite doc_texts 表，key=pid，value = 完整 chunk 文本
         return len(points)

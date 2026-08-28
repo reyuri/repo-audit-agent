@@ -2,6 +2,7 @@
 
 - audit_memory：审计过的仓库 / 上次审计结论 / 用户偏好 —— 跨会话增量复用。
 - agent_traces：每个 worker 的 plan/reason/act/observe/reflect 都落这里，便于复盘「慢在哪、谁调了什么」。
+- 关键工程背景：多 Worker 并行（ThreadPoolExecutor）会多线程访问同一个 SQLite 连接，所以做了线程安全处理。
 """
 from __future__ import annotations
 
@@ -46,7 +47,7 @@ class DB:
     def __init__(self, path: str | Path | None = None):
         self.path = Path(path) if path else data_path("db_path")
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        # check_same_thread=False：D4 起 worker 用 ThreadPoolExecutor 并行跑，
+        # check_same_thread=False：worker 用 ThreadPoolExecutor 并行跑，
         # 共享同一个 DB 连接跨线程写 trace；配合 self._lock 串行化写操作。
         self.conn = sqlite3.connect(str(self.path), check_same_thread=False)
         self.conn.executescript(_SCHEMA)
