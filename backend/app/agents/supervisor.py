@@ -14,6 +14,7 @@ supervisor 只做调度与证据充分性判断，不亲自检索；worker 只�
 """
 from __future__ import annotations
 
+import contextvars
 import json
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -75,9 +76,16 @@ def _run_parallel(tasks: list[dict], retriever, llm, db: DB, repo: str,
         wt = t.get("type") if t.get("type") in WORKER_TOOLS else "doc"
         return run_react(t.get("query", ""), wt, tools_by_type[wt], llm, db, repo, seen, max_steps)
 
+    # 把当前节点（supervisor）的 LangSmith trace 上下文带进 worker 线程：
+    # ThreadPoolExecutor 默认不传播 contextvar，子线程里的 LLM 调用会丢父 trace
+    # 变孤儿（token 也挂不到节点树）。copy_context + ctx.run 复现父上下文。
+    # 注意 Context 对象不可跨线程共享，必须每个 worker 单独 copy 一份。
     results: list[dict] = []
     with ThreadPoolExecutor(max_workers=min(len(tasks), 3)) as ex:
-        futures = [ex.submit(work, t) for t in tasks]
+        futures = []
+        for t in tasks:
+            child_ctx = contextvars.copy_context()
+            futures.append(ex.submit(lambda t=t, c=child_ctx: c.run(work, t)))
         for fut in as_completed(futures):
             try:
                 results.append(fut.result())

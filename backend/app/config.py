@@ -49,8 +49,8 @@ class Settings(BaseSettings):
     hf_endpoint: str = "https://hf-mirror.com"
 
     # ---- 可观测（LangSmith，key-gated）----
-    # 有 key 才激活追踪（LangGraph 自动图级 + LLM 方法 @traceable span 级）；
-    # 无 key 时静默降级、不影响运行。
+    # 有 key 才激活追踪（LangGraph 自动图级 + LLM 方法 @traceable span 级，
+    # outputs 带 usage_metadata 显示 token）。无 key 时静默降级、不影响运行。
     langsmith_api_key: str = ""
     langchain_project: str = "raat"
 
