@@ -5,7 +5,7 @@
 
 亮点：用 graph.stream(stream_mode="updates") 实时展示各 agent 节点（planner →
 supervisor → reflect → aggregator）的完成进度；报告里带证据分级、冲突反思、
-agent_traces 可观测时间线 —— 面试时「可观测的多 Agent」就是这么呈现的。
+agent_traces 可观测时间线 —— 把「可观测的多 Agent」直观呈现出来。
 """
 from __future__ import annotations
 

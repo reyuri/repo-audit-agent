@@ -102,7 +102,3 @@ streamlit run backend/app/ui/app.py
 > 机器人评论过滤避免噪音污染检索、BM25 和向量在同一批 chunk 上对齐才能做 RRF 融合。"
 
 **画面**：README「限制与后续工作」小节。
-
----
-
-> 附：技术答疑要点见本地 `INTERVIEW_STORY.md`（不进公开仓库）。
